@@ -3,10 +3,17 @@ import ffmpeg
 import io
 
 def convert_m4a_to_wav(m4a_file):
-    # Convert .m4a file to .wav using ffmpeg
+    # Create an in-memory buffer to store the converted WAV data
     output = io.BytesIO()
-    ffmpeg.input(m4a_file).output(output, format='wav').run()
-    output.seek(0)
+    
+    # Use ffmpeg to convert the .m4a file to .wav and write it to the buffer
+    try:
+        # Use ffmpeg to process the audio
+        ffmpeg.input('pipe:0').output('pipe:1', format='wav').run(input=m4a_file.read(), stdout=output)
+        output.seek(0)
+    except Exception as e:
+        st.error(f"Error during conversion: {e}")
+        return None
     return output
 
 # Streamlit app
@@ -23,8 +30,9 @@ if uploaded_file is not None:
     st.write("Converting your M4A file to WAV...")
     wav_file = convert_m4a_to_wav(uploaded_file)
 
-    # Provide download link for the converted WAV file
-    st.write("Conversion successful! You can download your WAV file below:")
-    st.download_button("Download WAV", wav_file, file_name="converted_audio.wav", mime="audio/wav")
+    if wav_file:
+        # Provide download link for the converted WAV file
+        st.write("Conversion successful! You can download your WAV file below:")
+        st.download_button("Download WAV", wav_file, file_name="converted_audio.wav", mime="audio/wav")
 else:
     st.write("Please upload an M4A file to convert.")
