@@ -1,21 +1,31 @@
 import streamlit as st
-import ffmpeg
+import audioread
+import numpy as np
+import wave
 import io
 
 def convert_m4a_to_wav(m4a_file):
-    # Create an in-memory buffer to store the converted WAV data
-    output = io.BytesIO()
-    
     try:
-        # Run ffmpeg, passing the uploaded file as input and saving the output to an in-memory buffer
-        ffmpeg.input('pipe:0').output('pipe:1', format='wav').run(input=m4a_file.read(), capture_stdout=True, capture_stderr=True)
+        # Initialize a memory buffer for the WAV file output
+        output = io.BytesIO()
         
-        # We need to run this in a different way, so let's try using 'capture_stdout'
+        # Use audioread to read the .m4a file
+        with audioread.audio_open(m4a_file) as audio_file:
+            # Read the data into numpy array
+            samples = np.frombuffer(audio_file.read_data(), dtype=np.int16)
+
+            # Write to a WAV format
+            with wave.open(output, 'wb') as wav_file:
+                wav_file.setnchannels(1)  # Mono
+                wav_file.setsampwidth(2)  # 2 bytes per sample (16-bit)
+                wav_file.setframerate(audio_file.samplerate)  # Audio sample rate
+                wav_file.writeframes(samples.tobytes())
+        
         output.seek(0)
+        return output
     except Exception as e:
         st.error(f"Error during conversion: {e}")
         return None
-    return output
 
 # Streamlit app
 st.title("M4A to WAV Audio Converter")
