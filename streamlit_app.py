@@ -6,10 +6,11 @@ def convert_m4a_to_wav(m4a_file):
     # Create an in-memory buffer to store the converted WAV data
     output = io.BytesIO()
     
-    # Use ffmpeg to convert the .m4a file to .wav and write it to the buffer
     try:
-        # Use ffmpeg to process the audio
-        ffmpeg.input('pipe:0').output('pipe:1', format='wav').run(input=m4a_file.read(), stdout=output)
+        # Run ffmpeg, passing the uploaded file as input and saving the output to an in-memory buffer
+        ffmpeg.input('pipe:0').output('pipe:1', format='wav').run(input=m4a_file.read(), capture_stdout=True, capture_stderr=True)
+        
+        # We need to run this in a different way, so let's try using 'capture_stdout'
         output.seek(0)
     except Exception as e:
         st.error(f"Error during conversion: {e}")
